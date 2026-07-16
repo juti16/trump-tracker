@@ -8,67 +8,125 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background-color: #faf8f5;
+            color: #2D3748;
+            background-color: #F7FAFC;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 650px;
-            margin: 40px auto;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #eef0f2;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
         }
         h1 {
-            font-size: 24px;
-            color: #1a1a1a;
+            font-size: 26px;
+            color: #1A202C;
             margin-top: 0;
-            border-bottom: 2px solid #eaeaea;
-            padding-bottom: 10px;
+            margin-bottom: 5px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
         .meta {
             font-size: 13px;
-            color: #888;
-            margin-bottom: 25px;
+            color: #718096;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .content {
-            font-size: 16px;
+        .meta::before {
+            content: "•";
+            color: #E53E3E;
+            font-weight: bold;
         }
-        h3 {
-            color: #c92a2a;
-            font-size: 18px;
-            margin-top: 25px;
-            margin-bottom: 5px;
+        .news-card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #E2E8F0;
+            margin-bottom: 20px;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .news-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        }
+        .card-number {
+            font-size: 12px;
+            font-weight: 800;
+            color: #E53E3E;
+            background: #FFF5F5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-content {
+            font-size: 15.5px;
+            color: #2D3748;
         }
         a {
-            color: #228be6;
+            color: #3182CE;
             text-decoration: none;
+            font-weight: 600;
+            word-break: break-all; /* Estää pitkiä linkkejä rikkomasta laatikon reunoja puhelimessa */
         }
         a:hover {
             text-decoration: underline;
         }
         footer {
-            margin-top: 40px;
-            font-size: 12px;
-            color: #aaa;
+            margin-top: 50px;
+            font-size: 11px;
+            color: #A0AEC0;
             text-align: center;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
+            border-top: 1px solid #E2E8F0;
+            padding-top: 20px;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Päivän Trump-tiivistys (Top 5)</h1>
-        <div class="meta">Päivitetty: 16.07.2026 klo 17:47 (UTC)</div>
+        <h1>Päivän Trump-tiivistys</h1>
+        <div class="meta">Päivitetty: 16.07.2026 klo 17:57 (UTC)</div>
         <div class="content">
-            Nämä ovat Top 5 -tiivistykset viimeisimmistä ja merkittävimmistä Donald Trumpiin liittyvistä uutisista:<br><br><h3>1. **Trump vastustaa ICE:n liikennetarkastusten lopettamista**: Presidentti Donald Trump on vaatinut, että Immigration and Customs Enfrocement (ICE) jatkaa liikennetarkastuksia, vaikka uusi politiikka kieltää niitä. (Lähde: Associated Press, URL: [https://apnews.com/article/ice-immigration-enforcement-deaths-traffic-stops-3d614361d8354474bc4eb8e37ec26b28](https://apnews.com/article/ice-immigration-enforcement-deaths-traffic-stops-3d614361d8354474bc4eb8e37ec26b28))<br><br><h3>2. **Trumpin DNI-puolenominaatti J. Jay Clayton ei pyydä toimeenpanemaan Bidenin voittoa vuoden 2020 presidentinvaaleissa**: Jay Clayton ei suostunut sanomaan, että Joe Biden voitti vuoden 2020 presidentinvaaleissa. (Lähde: CNBC, URL: [https://www.cnbc.com/2026/07/15/trump-dni-jay-clayton-senate-2020-election.html](https://www.cnbc.com/2026/07/15/trump-dni-jay-clayton-senate-2020-election.html))<br><br><h3>3. **US-puolustusministeriön vaatimus: Venezuela aloittaa viralliset neuvottelut oppositiopuolueen edustajain kanssa**: Venezuela hallituksen tavoitteena on vahvistaa demokratia ja vaalijärjestelmä. (Lähde: BBC News, URL: [https://www.bbc.co.uk/news/articles/c1eye5320g5o](https://www.bbc.co.uk/news/articles/c1eye5320g5o))<br><br><h3>4. **Kongressi hyväksyy Trumpin esityksen vuorokausiautoaikaa : Vuorokausiautoajoina ei enää ole muutosta, kun vuorokausiautoajoina ei muutettu, tuli muutosta siihen, että vuorokausiautoaikoihin ei lisätä muutosta. : Vuorokausiautoaika ei enää muutu.**: Yhdysvaltain kongressi on hyväksynyt presidentti Donald Trumpin esityksen, jossa säädetään, että vuorokausiaikaa ei enää muuteta. (Lähde: BBC News, URL: [https://www.bbc.com/news/articles/cz9l9venjd8o](https://www.bbc.com/news/articles/cz9l9venjd8o))<br><br><h3>5. **Writers Guild haastaa Paramount-Warner Bros. fuusiokokeilun oikeussalissa**: Writers Guild of America on haastanut Paramountin ja Warner Bros. Discoveryn fuusiokokeilun oikeussalissa, koska se sanoo, että fuusiokokeilu aiheuttaa kirjoittajille vahinkoa. (Lähde: Associated Press, URL: [https://apnews.com/article/paramount-warner-writers-guild-lawsuit-94059525fdc9812acd73ce5092de3fbf](https://apnews.com/article/paramount-warner-writers-guild-lawsuit-94059525fdc9812acd73ce5092de3fbf))
+            
+            <div class="news-card">
+                <div class="card-number">Uutinen #1</div>
+                <div class="card-content">### Top 5 -tiivistys Donald Trumpiin liittyvistä uutisista<br><br>**USA valmistaa 1 dollarin kolikkoa Trumpin kuva mukana**<br>USA:n valtiovaluuttovirasto alkaa valmistaa 1 dollarin kaksiosaisen kolikkoa, jossa on presidentti Donald Trumpin kuva. Kolikko on tarkoitettu Yhdysvaltain 250-vuotissyntymäpäivän kunniaksi.<br><br>(Lähde: Associated Press, URL: <a href="https://apnews.com/article/trump-gold-coin-treasury-us-mint-d4e8b5fb44bd899ea6dfa53f6744a2f0" target="_blank">https://apnews.com/article/trump-gold-coin-treasury-us-mint-d4e8b5fb44bd899ea6dfa53f6744a2f0</a>)</div>
+            </div>
+            
+
+            <div class="news-card">
+                <div class="card-number">Uutinen #2</div>
+                <div class="card-content">**Toinen tarkoituksella tappaminen: Trumpin tukea saaneet viranomaiset**<br>Donald Trump on kertonut, että immigratioiden hallintokeskuksen (ICE) toimintaa ei tulisi keskeyttää tarkoituksella. Tämä tieto perustuu kakselle tuntemattomalle lähteelle, jotka CNN:llä kertovat Trumpin suunnitelmasta.<br><br>(Lähde: CNN, URL: <a href="https://www.cnn.com/2026/07/15/u" target="_blank">https://www.cnn.com/2026/07/15/u</a> s/trump-ice-traffic-stops)</div>
+            </div>
+            
+
+            <div class="news-card">
+                <div class="card-number">Uutinen #3</div>
+                <div class="card-content">**Trumpin DNI -kelpoinen Jay Clayton kieltäytyy vakuuttamasta Bidenin voiton 2020 vaaleissa**<br>Jay Clayton, jota on nimitetty kansallisen turvallisuuden neuvoston (DNI) johtajaksi, kieltäytyy vakuuttamasta Joe Bidenin voitosta vuoden 2020 presidentinvaaleissa. Clayton on nimittäin Trumpin valinta ja hänen toimimisensa on tarkoituksellista.<br><br>(Lähde: CNBC, URL: <a href="https://www.cnbc.com/2026/07/15/trump-dni-jay-clayton-senate-2020-election.html" target="_blank">https://www.cnbc.com/2026/07/15/trump-dni-jay-clayton-senate-2020-election.html</a>)</div>
+            </div>
+            
+
+            <div class="news-card">
+                <div class="card-number">Uutinen #4</div>
+                <div class="card-content">**Buffett piti Trumpin FED -valintaa hyvänä valintana**<br>Warren Buffett on puhunut Trumpin valitseman FED -johtajana Kevin Warshista, joka on Buffettin mielestä hyvä valinta.<br><br>(Lähde: CNBC, URL: <a href="https://www.cnbc.com/2026/07/15/buffett-says-trumps-pick-of-kevin-warsh-for-fed-chair-was-good-choice.html" target="_blank">https://www.cnbc.com/2026/07/15/buffett-says-trumps-pick-of-kevin-warsh-for-fed-chair-was-good-choice.html</a>)</div>
+            </div>
+            
+
+            <div class="news-card">
+                <div class="card-number">Uutinen #5</div>
+                <div class="card-content">**Trumpin valtuuttama kestää päiväsaikaan**<br>USA:n edustuslane on tavoittanut tavoitteen, joka sisältää pitämällä kesäaikaa koko vuoden. <br><br>(Lähde: BBC News, URL: <a href="https://www.bbc.com/news/articles/cz9l9venjd8o" target="_blank">https://www.bbc.com/news/articles/cz9l9venjd8o</a>)</div>
+            </div>
+            
         </div>
         <footer>
-            Luotu automaattisesti käyttäen uutishakua ja tekoälyä (Groq (Llama 3)).
+            AUTOMAATTINEN KOOSTE • LÄHTEENÄ VALITUT MEDIAT • TEKOÄLY: GROQ (LLAMA 3)
         </footer>
     </div>
 </body>
