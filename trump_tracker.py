@@ -59,22 +59,21 @@ def get_trump_news():
                 f"Snippet: {art['description']}\n\n"
             )
 
-    # Tiukka ohjeistus hyvään uutissuomeen ja selkeään tagirakenteeseen
+    # Tiukennettu prompti, joka kieltää suorat käännökset ja vaatii uutistoimittajan otetta
     prompt = f"""
-    Olet kokenut suomalainen uutistoimittaja ja toimitustoimittaja. Tehtäväsi on luoda objektiivinen Top 5 -uutiskatsaus viimeisimmistä Donald Trumpiin liittyvistä uutisista.
+    Olet kokenut suomalainen uutistoimittaja ja toimitussihteeri. Tehtäväsi on luoda objektiivinen Top 5 -uutiskatsaus viimeisimmistä Donald Trumpiin liittyvistä uutisista.
     Käytä alla olevaa englanninkielistä uutissyötettä raakamateriaalina.
 
-    ÄLÄ tee suoraa sana-sanaista käännöstä, vaan lue uutinen, ymmärrä sen ydin ja kirjoita uutinen suomeksi käyttäen luonnollista, ammattimaista ja hyvää suomen yleiskieltä. 
-
-    KIRJOITUSOHJEET SUOMEKSI:
-    - Vältä englannin kielen rakenteiden matkimista (kuten passiivirakenteita, jos aktiivi sopii paremmin).
-    - Kirjoita uutistyyliin: napakasti, asiallisesti ja suoraviivaisesti.
+    TÄRKEÄT KIELIOHJEET (ÄLÄ TEE SUORAA KÄÄNNÖSTÄ):
+    - Älä käännä sanoja tai lauserakenteita suoraan englannista suomeksi. Lue uutinen, ymmärrä sen ydin ja kirjoita se uudelleen sujuvalle ja luonnolliselle suomen yleiskielelle.
+    - Välidä anglismeja, huonoja suoria käännöksiä (kuten "poliisiluokka", "yhteisöllisyys" väärässä kontekstissa) tai tönkköjä passiivirakenteita.
+    - Kirjoita uutistyyliin: napakasti, asiallisesti, selkeästi ja ammattimaisesti.
     - Jokaisen tiivistelmän pituus tulee olla 2-4 lausetta.
     - Liitä jokaisen uutisen loppuun englanninkielinen lähde ja URL-osoite muodossa: (Lähde: [Median Nimi], URL: [Linkki])
 
-    Muotoile vastauksesi TISMALLEEN näin jokaisen 5 uutisen kohdalla:
+    Muotoile vastauksesi TISMALLEEN näin jokaisen 5 uutisen kohdalla (ilman Markdown-tähtiä tai -merkintöjä):
     <uutinen>
-    <otsikko>Tähän lyhyt, iskevä ja uutismainen suomenkielinen otsikko (ilman tähtiä)</otsikko>
+    <otsikko>Tähän lyhyt, iskevä ja uutismainen suomenkielinen otsikko</otsikko>
     <sisalto>Tähän suomenkielinen uutisteksti ja loppuun lähde linkkeineen.</sisalto>
     </uutinen>
 
@@ -100,18 +99,17 @@ def get_trump_news():
         except Exception as e:
             print(f"-> Gemini epäonnistui tai oli ruuhkainen. Virhe: {e}")
 
-    # YRITYS 2 (FALLBACK): Groq API (Llama-malli)
+    # YRITYS 2 (FALLBACK): Groq API (Päivitetty huomattavasti älykkäämpään 70B-malliin!)
     if not tiivistys and GROQ_API_KEY:
         try:
             print("-> Siirrytään varajärjestelmään (Groq)...")
             groq_client = Groq(api_key=GROQ_API_KEY)
-                        chat_completion = groq_client.chat.completions.create(
+            chat_completion = groq_client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.3-70b-specdec", # Tai "mixtral-8x7b-32768"
+                model="llama-3.3-70b-specdec",  # Järeä, suomea hyvin osaava 70-miljardinen malli
             )
-
             tiivistys = chat_completion.choices[0].message.content
-            kaytetty_tekoaly = "Groq (Llama 3)"
+            kaytetty_tekoaly = "Groq (Llama 3.3 70B)"
         except Exception as e:
             print(f"Kriittinen virhe: Myös varajärjestelmä Groq epäonnistui. Virhe: {e}")
 
@@ -145,7 +143,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
             # Korvataan rivinvaihdot HTML-rivinvaihdoilla
             sisalto_html = sisalto.replace("\n", "<br>")
             
-            # Muutetaan tekstissä olevat linkit klikattaviksi HTML-linkeiksi (vain kerran!)
+            # Muutetaan tekstissä olevat linkit klikattaviksi HTML-linkeiksi
             sisalto_html = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', sisalto_html)
             
             # Luodaan puhdas ja tiivis korttirakenne
@@ -161,7 +159,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
         muotoiltu_teksti = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', muotoiltu_teksti)
         html_sisalto = f'<div class="news-card"><div class="card-content">{muotoiltu_teksti}</div></div>'
     
-    # HTML-sivun muotoilu ilman punaista väriä ja puhtaalla, modernilla ilmeellä
+    # HTML-sivun muotoilu puhtaalla ja modernilla ilmeellä ilman punaista
     html_content = f"""<!DOCTYPE html>
 <html lang="fi">
 <head>
@@ -258,7 +256,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
 """
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("index.html päivitetty onnistuneesti parannetulla kielellä ja linkeillä!")
+    print("index.html päivitetty onnistuneesti parannetulla kielellä, jättimallilla ja linkeillä!")
 
 if __name__ == "__main__":
     get_trump_news()
