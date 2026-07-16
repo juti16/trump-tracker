@@ -1,18 +1,18 @@
 import os
+import re
 import requests
 from google import genai
 from groq import Groq
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 
-# Ladataan ympäristömuuttujat (paikallista käyttöä varten .env-tiedostosta, GitHubissa Secrets-asetuksista)
+# Ladataan ympäristömuuttujat (.env tai GitHub Secrets)
 load_dotenv()
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# Luotettavat globaalit uutismediat (whitelist)
 TRUSTED_DOMAINS = (
     "reuters.com,apnews.com,bbc.co.uk,bbc.com,nytimes.com,washingtonpost.com,"
     "bloomberg.com,theguardian.com,politico.com,cnn.com,wsj.com,cnbc.com"
@@ -20,18 +20,18 @@ TRUSTED_DOMAINS = (
 
 def get_trump_news():
     if not NEWS_API_KEY:
-        print("Virhe: NEWS_API_KEY puuttuu! Varmista ympäristömuuttujat tai .env-tiedosto.")
+        print("Virhe: NEWS_API_KEY puuttuu!")
         return
 
     print("Haetaan tuoreimpia uutisia...")
     url = (
         f"https://newsapi.org/v2/everything?"
-        f"q=Trump&"
-        f"domains={TRUSTED_DOMAINS}&"
-        f"language=en&"
-        f"sortBy=publishedAt&"
-        f"pageSize=20&"
-        f"apiKey={NEWS_API_KEY}"
+        f"q=Trump?"
+        f"&domains={TRUSTED_DOMAINS}"
+        f"&language=en"
+        f"&sortBy=publishedAt"
+        f"&pageSize=20"
+        f"&apiKey={NEWS_API_KEY}"
     )
     
     try:
@@ -49,7 +49,6 @@ def get_trump_news():
         print("Ei löytynyt Trump-aiheisia uutisia.")
         return
 
-    # Muotoillaan uutisotsikot ja -kuvaukset yhteen pötköön tekoälylle lähetettäväksi
     news_feed_text = ""
     for idx, art in enumerate(articles):
         if art.get('title') and art.get('description'):
@@ -60,15 +59,21 @@ def get_trump_news():
                 f"Snippet: {art['description']}\n\n"
             )
 
+    # Ohjeistetaan tekoäly käyttämään selkeitä <uutinen>, <otsikko> ja <sisalto> -tageja
     prompt = f"""
     Tehtäväsi on luoda objektiivinen Top 5 -tiivistys viimeisimmistä ja tärkeimmistä Donald Trumpiin liittyvistä uutisista.
     Käytä alla olevaa uutissyötettä materiaalina.
 
     Säännöt:
-    1. Kirjoita jokainen tiivistys suomeksi (noin 2-4 napakkaa lausetta per uutinen).
-    2. Liitä JOKAISEN uutisen loppuun alkuperäinen englanninkielinen lähde ja URL-osoite muodossa: (Lähde: [Median Nimi], URL: [Linkki])
-    3. Valitse vain oikeasti uutisarvoiset ja merkittävät aiheet. Älä toista samaa uutisaihetta useasti.
-    4. Palauta vastaus numeroituna listana, jossa uutiset alkavat muodossa "1. ", "2. " jne., jotta koodi osaa palastella ne siisteiksi laatikoiksi.
+    1. Valitse 5 tärkeintä ja uutisarvoisinta uutisaihetta. Älä toista samaa uutisaihetta.
+    2. Kirjoita jokainen tiivistys suomeksi (noin 2-4 lausetta per uutinen).
+    3. Liitä jokaisen uutisen loppuun alkuperäinen englanninkielinen lähde ja URL-osoite muodossa: (Lähde: [Median Nimi], URL: [Linkki])
+    
+    Muotoile VASTAUKSESI TISMALLEEN näin jokaisen 5 uutisen kohdalla:
+    <uutinen>
+    <otsikko>Tähän uutisen lyhyt ja iskevä suomenkielinen otsikko ilman tähtiä</otsikko>
+    <sisalto>Tähän suomenkielinen tiivistelmä ja loppuun lähde linkkeineen.</sisalto>
+    </uutinen>
 
     UUTISSYÖTE:
     {news_feed_text}
@@ -78,7 +83,7 @@ def get_trump_news():
     tiivistys = ""
     kaytetty_tekoaly = ""
 
-    # YRITYS 1: Google Gemini (Ensisijainen)
+    # YRITYS 1: Google Gemini
     if GEMINI_API_KEY:
         try:
             print("Yritetään luoda tiivistelmä Google Geminillä...")
@@ -92,7 +97,7 @@ def get_trump_news():
         except Exception as e:
             print(f"-> Gemini epäonnistui tai oli ruuhkainen. Virhe: {e}")
 
-    # YRITYS 2 (FALLBACK): Groq API (Varajärjestelmä)
+    # YRITYS 2 (FALLBACK): Groq API (Llama-malli)
     if not tiivistys and GROQ_API_KEY:
         try:
             print("-> Siirrytään varajärjestelmään (Groq)...")
@@ -106,66 +111,53 @@ def get_trump_news():
         except Exception as e:
             print(f"Kriittinen virhe: Myös varajärjestelmä Groq epäonnistui. Virhe: {e}")
 
-    # Jos jompikumpi tekoäly tuotti vastauksen, kirjoitetaan HTML-sivu
     if tiivistys:
         kirjoita_html_sivu(tiivistys, kaytetty_tekoaly)
     else:
-        print("Uutistiivistelmän luonti epäonnistui molemmilla tekoälypalveluilla.")
-
-import re
+        print("Uutistiivistelmän luonti epäonnistui kokonaan.")
 
 def kirjoita_html_sivu(teksti, tekoaly):
     nykyhetki = datetime.now(timezone.utc).strftime("%d.%m.%Y klo %H:%M (UTC)")
     
-    # Korvataan rivinvaihdot HTML-rivinvaihdoilla
-    muotoiltu_teksti = teksti.replace("\n", "<br>")
+    # Etsitään tekoälyn tuottamat <uutinen>-lohkot
+    uutis_lohkot = re.findall(r'<uutinen>(.*?)</uutinen>', teksti, re.DOTALL)
     
-    # Tunnistetaan tekstissä olevat URL-osoitteet ja muutetaan ne klikattaviksi HTML-linkeiksi.
-    # target="_blank" varmistaa, että linkki aukeaa puhelimessa uuteen välilehteen.
-    url_pattern = r'(https?://[^\s\)\>]+)'
-    muotoiltu_teksti = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', muotoiltu_teksti)
+    html_sisalto = ""
     
-    # Korjataan mahdolliset tuplalinkitykset, jos LLM on jo tuottanut valmiiksi HTML-linkkejä
-    muotoiltu_teksti = muotoiltu_teksti.replace('href="<a href="', 'href="')
-    
-    # Paloitellaan teksti uutisiksi numeroiden (esim. "1. ", "2. ") perusteella,
-    # jotta saamme jokaisen uutisen omaan tyylikkääseen laatikkoonsa.
-    uutiset = []
-    current_part = muotoiltu_teksti
-    
-    for i in range(1, 6):
-        seuraava_numero = f"{i+1}. "
-        nykyinen_numero = f"{i}. "
-        
-        if nykyinen_numero in current_part:
-            if i < 5 and seuraava_numero in current_part:
-                # Otetaan teksti nykyisen ja seuraavan numeron välistä
-                osat = current_part.split(seuraava_numero, 1)
-                uutis_osa = osat[0].replace(nykyinen_numero, "").strip()
-                current_part = seuraava_numero + osat[1] # Jätetään loppuosa seuraavaa kierrosta varten
-            else:
-                # Viimeinen uutinen (numero 5) ottaa kaiken lopun tekstistä
-                uutis_osa = current_part.replace(nykyinen_numero, "").strip()
+    if uutis_lohkot:
+        for lohko in uutis_lohkot:
+            # Kaivetaan otsikko ja sisältö tagien sisältä
+            otsikko_match = re.search(r'<otsikko>(.*?)</otsikko>', lohko, re.DOTALL)
+            sisalto_match = re.search(r'<sisalto>(.*?)</sisalto>', lohko, re.DOTALL)
             
-            # Siistitään turhat rivinvaihdot uutisen alusta ja lopusta
-            while uutis_osa.startswith("<br>"): uutis_osa = uutis_osa[4:]
-            while uutis_osa.endswith("<br>"): uutis_osa = uutis_osa[:-4]
+            otsikko = otsikko_match.group(1).strip() if otsikko_match else "Uutinen"
+            sisalto = sisalto_match.group(1).strip() if sisalto_match else lohko.strip()
             
-            # Luodaan uutislaatikon (card) HTML-rakenne
-            uutiset.append(f"""
+            # Poistetaan mahdolliset tähdet ja siistitään rivinvaihdot
+            otsikko = otsikko.replace("**", "").replace("*", "")
+            sisalto = sisalto.replace("**", "").replace("*", "")
+            sisalto_html = sisalto.replace("\n", "<br>")
+            
+            # Tehdään linkeistä klikattavia
+            url_pattern = r'(https?://[^\s\)\>]+)'
+            sisalto_html = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', sisalto_html)
+            sisalto_html = sisalto_html.replace('href="<a href="', 'href="')
+            
+            # Luodaan puhdas ja tiivis korttirakenne (otsikko on nyt laatikon herra)
+            html_sisalto += f"""
             <div class="news-card">
-                <div class="card-number">Uutinen #{i}</div>
-                <div class="card-content">{uutis_osa}</div>
+                <div class="card-title">{otsikko}</div>
+                <div class="card-content">{sisalto_html}</div>
             </div>
-            """)
-
-    # Jos palastelu epäonnistui (LLM ei palauttanut numerolistaa), käytetään varasysteeminä yhtä isoa laatikkoa
-    if not uutiset:
-        html_sisalto = f'<div class="news-card"><div class="card-content">{muotoiltu_teksti}</div></div>'
+            """
     else:
-        html_sisalto = "\n".join(uutiset)
+        # Varasysteemi, jos tekoäly jostain syystä ohitti tagit kokonaan
+        muotoiltu_teksti = teksti.replace("\n", "<br>")
+        url_pattern = r'(https?://[^\s\)\>]+)'
+        muotoiltu_teksti = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', muotoiltu_teksti)
+        html_sisalto = f'<div class="news-card"><div class="card-content">{muotoiltu_teksti}</div></div>'
     
-    # Koko HTML-sivun pohja ja CSS-tyylit
+    # HTML-sivun muotoilu ilman punaista väriä ja puhtaalla, modernilla ilmeellä
     html_content = f"""<!DOCTYPE html>
 <html lang="fi">
 <head>
@@ -197,57 +189,46 @@ def kirjoita_html_sivu(teksti, tekoaly):
         .meta {{
             font-size: 13px;
             color: #718096;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 10px;
         }}
         .meta::before {{
             content: "•";
-            color: #E53E3E;
+            color: #4A5568; /* Tummanharmaa täplä punaisen tilalla */
             font-weight: bold;
         }}
         .news-card {{
             background: #ffffff;
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
             border: 1px solid #E2E8F0;
-            margin-bottom: 20px;
-            position: relative;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 16px;
         }}
-        .news-card:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-        }}
-        .card-number {{
-            font-size: 12px;
-            font-weight: 800;
-            color: #E53E3E;
-            background: #FFF5F5;
-            padding: 4px 10px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .card-title {{
+            font-size: 18px;
+            font-weight: 750;
+            color: #1A202C; /* Musta boldattu pääotsikko */
+            margin-bottom: 8px;
+            line-height: 1.35;
         }}
         .card-content {{
-            font-size: 15.5px;
-            color: #2D3748;
+            font-size: 14.5px;
+            color: #4A5568;
         }}
         a {{
             color: #3182CE;
             text-decoration: none;
             font-weight: 600;
-            word-break: break-all; /* Estää pitkiä linkkejä rikkomasta laatikon reunoja puhelimessa */
+            word-break: break-all;
         }}
         a:hover {{
             text-decoration: underline;
         }}
         footer {{
-            margin-top: 50px;
+            margin-top: 40px;
             font-size: 11px;
             color: #A0AEC0;
             text-align: center;
@@ -273,7 +254,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
 """
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("index.html päivitetty onnistuneesti! Linkit ovat nyt klikattavia.")
+    print("index.html päivitetty onnistuneesti! Kaikki uutiset ovat nyt omissa siisteissä laatikoissaan.")
 
 if __name__ == "__main__":
     get_trump_news()
