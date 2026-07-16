@@ -1,0 +1,41 @@
+name: Update Trump News Website
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Ajaa koodin joka aamu klo 06:00 UTC (klo 09:00 Suomen aikaa)
+  workflow_dispatch: # Sallii koodin käynnistämisen myös manuaalisesti napista painamalla
+
+permissions:
+  contents: write # Antaa oikeuden tallentaa index.html-tiedosto takaisin GitHubiin
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-genai requests groq python-dotenv
+
+      - name: Run tracker script
+        env:
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python trump_tracker.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git diff-index --quiet HEAD || git commit -m "Päivitetty päivän Trump-uutiset"
+          git push
