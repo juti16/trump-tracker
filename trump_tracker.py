@@ -26,7 +26,7 @@ def get_trump_news():
     print("Haetaan tuoreimpia uutisia...")
     url = (
         f"https://newsapi.org/v2/everything?"
-        f"q=Trump?"
+        f"q=Trump"
         f"&domains={TRUSTED_DOMAINS}"
         f"&language=en"
         f"&sortBy=publishedAt"
@@ -59,31 +59,34 @@ def get_trump_news():
                 f"Snippet: {art['description']}\n\n"
             )
 
-    # Ohjeistetaan tekoäly käyttämään selkeitä <uutinen>, <otsikko> ja <sisalto> -tageja
+    # Tiukka ohjeistus hyvään uutissuomeen ja selkeään tagirakenteeseen
     prompt = f"""
-    Tehtäväsi on luoda objektiivinen Top 5 -tiivistys viimeisimmistä ja tärkeimmistä Donald Trumpiin liittyvistä uutisista.
-    Käytä alla olevaa uutissyötettä materiaalina.
+    Olet kokenut suomalainen uutistoimittaja ja toimitustoimittaja. Tehtäväsi on luoda objektiivinen Top 5 -uutiskatsaus viimeisimmistä Donald Trumpiin liittyvistä uutisista.
+    Käytä alla olevaa englanninkielistä uutissyötettä raakamateriaalina.
 
-    Säännöt:
-    1. Valitse 5 tärkeintä ja uutisarvoisinta uutisaihetta. Älä toista samaa uutisaihetta.
-    2. Kirjoita jokainen tiivistys suomeksi (noin 2-4 lausetta per uutinen).
-    3. Liitä jokaisen uutisen loppuun alkuperäinen englanninkielinen lähde ja URL-osoite muodossa: (Lähde: [Median Nimi], URL: [Linkki])
-    
-    Muotoile VASTAUKSESI TISMALLEEN näin jokaisen 5 uutisen kohdalla:
+    ÄLÄ tee suoraa sana-sanaista käännöstä, vaan lue uutinen, ymmärrä sen ydin ja kirjoita uutinen suomeksi käyttäen luonnollista, ammattimaista ja hyvää suomen yleiskieltä. 
+
+    KIRJOITUSOHJEET SUOMEKSI:
+    - Vältä englannin kielen rakenteiden matkimista (kuten passiivirakenteita, jos aktiivi sopii paremmin).
+    - Kirjoita uutistyyliin: napakasti, asiallisesti ja suoraviivaisesti.
+    - Jokaisen tiivistelmän pituus tulee olla 2-4 lausetta.
+    - Liitä jokaisen uutisen loppuun englanninkielinen lähde ja URL-osoite muodossa: (Lähde: [Median Nimi], URL: [Linkki])
+
+    Muotoile vastauksesi TISMALLEEN näin jokaisen 5 uutisen kohdalla:
     <uutinen>
-    <otsikko>Tähän uutisen lyhyt ja iskevä suomenkielinen otsikko ilman tähtiä</otsikko>
-    <sisalto>Tähän suomenkielinen tiivistelmä ja loppuun lähde linkkeineen.</sisalto>
+    <otsikko>Tähän lyhyt, iskevä ja uutismainen suomenkielinen otsikko (ilman tähtiä)</otsikko>
+    <sisalto>Tähän suomenkielinen uutisteksti ja loppuun lähde linkkeineen.</sisalto>
     </uutinen>
 
     UUTISSYÖTE:
     {news_feed_text}
     """
 
-    print(f"Löytyi {len(articles)} uutista. Luodaan Top 5 -tiivistystä...")
+    print(f"Löytyi {len(articles)} uutista. Luodaan Top 5 -tiivistystä suomeksi...")
     tiivistys = ""
     kaytetty_tekoaly = ""
 
-    # YRITYS 1: Google Gemini
+    # YRITYS 1: Google Gemini (Ensisijainen)
     if GEMINI_API_KEY:
         try:
             print("Yritetään luoda tiivistelmä Google Geminillä...")
@@ -119,10 +122,11 @@ def get_trump_news():
 def kirjoita_html_sivu(teksti, tekoaly):
     nykyhetki = datetime.now(timezone.utc).strftime("%d.%m.%Y klo %H:%M (UTC)")
     
-    # Etsitään tekoälyn tuottamat <uutinen>-lohkot
+    # Etsitään tekoälyn tuottamat <uutinen>-lohkot raakatekstistä
     uutis_lohkot = re.findall(r'<uutinen>(.*?)</uutinen>', teksti, re.DOTALL)
     
     html_sisalto = ""
+    url_pattern = r'(https?://[^\s\)\>]+)'
     
     if uutis_lohkot:
         for lohko in uutis_lohkot:
@@ -133,17 +137,17 @@ def kirjoita_html_sivu(teksti, tekoaly):
             otsikko = otsikko_match.group(1).strip() if otsikko_match else "Uutinen"
             sisalto = sisalto_match.group(1).strip() if sisalto_match else lohko.strip()
             
-            # Poistetaan mahdolliset tähdet ja siistitään rivinvaihdot
+            # Siistitään tähdet pois tekstistä
             otsikko = otsikko.replace("**", "").replace("*", "")
             sisalto = sisalto.replace("**", "").replace("*", "")
+            
+            # Korvataan rivinvaihdot HTML-rivinvaihdoilla
             sisalto_html = sisalto.replace("\n", "<br>")
             
-            # Tehdään linkeistä klikattavia
-            url_pattern = r'(https?://[^\s\)\>]+)'
+            # Muutetaan tekstissä olevat linkit klikattaviksi HTML-linkeiksi (vain kerran!)
             sisalto_html = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', sisalto_html)
-            sisalto_html = sisalto_html.replace('href="<a href="', 'href="')
             
-            # Luodaan puhdas ja tiivis korttirakenne (otsikko on nyt laatikon herra)
+            # Luodaan puhdas ja tiivis korttirakenne
             html_sisalto += f"""
             <div class="news-card">
                 <div class="card-title">{otsikko}</div>
@@ -153,7 +157,6 @@ def kirjoita_html_sivu(teksti, tekoaly):
     else:
         # Varasysteemi, jos tekoäly jostain syystä ohitti tagit kokonaan
         muotoiltu_teksti = teksti.replace("\n", "<br>")
-        url_pattern = r'(https?://[^\s\)\>]+)'
         muotoiltu_teksti = re.sub(url_pattern, r'<a href="\1" target="_blank">\1</a>', muotoiltu_teksti)
         html_sisalto = f'<div class="news-card"><div class="card-content">{muotoiltu_teksti}</div></div>'
     
@@ -196,7 +199,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
         }}
         .meta::before {{
             content: "•";
-            color: #4A5568; /* Tummanharmaa täplä punaisen tilalla */
+            color: #4A5568;
             font-weight: bold;
         }}
         .news-card {{
@@ -210,7 +213,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
         .card-title {{
             font-size: 18px;
             font-weight: 750;
-            color: #1A202C; /* Musta boldattu pääotsikko */
+            color: #1A202C;
             margin-bottom: 8px;
             line-height: 1.35;
         }}
@@ -254,7 +257,7 @@ def kirjoita_html_sivu(teksti, tekoaly):
 """
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("index.html päivitetty onnistuneesti! Kaikki uutiset ovat nyt omissa siisteissä laatikoissaan.")
+    print("index.html päivitetty onnistuneesti parannetulla kielellä ja linkeillä!")
 
 if __name__ == "__main__":
     get_trump_news()
