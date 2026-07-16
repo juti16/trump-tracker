@@ -105,10 +105,11 @@ def get_trump_news():
         try:
             print("-> Siirrytään varajärjestelmään (Groq)...")
             groq_client = Groq(api_key=GROQ_API_KEY)
-            chat_completion = groq_client.chat.completions.create(
+                        chat_completion = groq_client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-specdec", # Tai "mixtral-8x7b-32768"
             )
+
             tiivistys = chat_completion.choices[0].message.content
             kaytetty_tekoaly = "Groq (Llama 3)"
         except Exception as e:
